@@ -10,55 +10,50 @@ pi = np.pi
 class App(object):
     def __init__(self, master):
         self.master = master
-        self.thisPlayer = Bunch(
-            rebounds=20.0,
-            freeThrows=5.0,
-            steal=5.0,
-            underRim=10,
-            distance=10)
-        self.fig = mplfig.Figure(figsize=(1.5, 1.5))
-        self.ax = self.fig.add_axes([0.025, 0.025, 0.95, 0.95], polar=False)
+        #self.fig, self.ax = plt.subplots(figsize=(4,4))
+        self.fig = mplfig.Figure(figsize=(4, 4))
+        self.ax = self.fig.add_axes([0.1, 0.1, 0.8, 0.8])
         self.canvas = tkagg.FigureCanvasTkAgg(self.fig, master=master)
         self.ax.grid(False)
 
-        N = 5
-        theta = np.arange(0.0, 2 * pi, 2 * pi / N)
-        radii = [self.thisPlayer.rebounds, self.thisPlayer.freeThrows,
-                 self.thisPlayer.steal, self.thisPlayer.underRim,
-                 self.thisPlayer.distance]
-        width = [2 * pi / (N)] * 5
-        bars = (
-            # self.ax.bar(0, 20, width=2 * pi, linewidth=0) +
-            self.ax.bar(theta, radii, width=width, bottom=0.2))
-        cmap = plt.get_cmap('jet')
-        for r, bar in zip(radii, bars):
-            bar.set_facecolor(cmap(r / 20.))
-            bar.set_alpha(0.5)
-        self.ax.set_xticklabels([])
-        self.ax.set_yticklabels([])
-        self.canvas.get_tk_widget().pack()
-        self.canvas.draw()
-        self.canvas.mpl_connect('key_press_event', self.on_key_event)
+        self.x = np.linspace(0,6.28)
+        self.phase = 0
+        self.amplitude = 1.0
         
+        self.canvas.get_tk_widget().pack()
+        self.update_plot()
+        
+        self.canvas.mpl_connect('key_press_event', self.on_key_event)
+    
+    def update_plot(self):
+        self.y = self.amplitude * np.sin(self.x - self.phase)
+        self.ax.cla()
+        self.ax.plot(self.x,self.y)
+        self.ax.set_ylim(-2,2)
+        self.canvas.draw()
+    
     def on_key_event(self,event):
         if event.key == 'q' or event.key == 'Q':
             self.quit()
-        print('you pressed %s' % event.key)
+        elif event.key == 'right':
+            self.phase = self.phase + 0.1
+            self.update_plot()
+        elif event.key == 'left':
+            self.phase = self.phase - 0.1
+            self.update_plot()
+        elif event.key == 'up':
+            self.amplitude = self.amplitude * 1.1
+            self.update_plot()
+        elif event.key == 'down':
+            self.amplitude = self.amplitude * 0.9
+            self.update_plot()
+        else:
+            print('you pressed %s' % event.key)
         #key_press_handler(event, self.canvas, toolbar)
     
     def quit(self):
         self.master.quit()
         self.master.destroy()
-
-
-class Bunch(object):
-    """
-    http://code.activestate.com/recipes/52308
-    foo=Bunch(a=1,b=2)
-    """
-    def __init__(self, **kwds):
-        self.__dict__.update(kwds)
-
 
 def main():
     root = tk.Tk()
