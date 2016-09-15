@@ -3,6 +3,7 @@ import numpy as np
 import Tkinter as tk
 import matplotlib.figure as mplfig
 import matplotlib.backends.backend_tkagg as tkagg
+from matplotlib.backend_bases import key_press_handler
 pi = np.pi
 
 
@@ -16,7 +17,7 @@ class App(object):
             underRim=10,
             distance=10)
         self.fig = mplfig.Figure(figsize=(1.5, 1.5))
-        self.ax = self.fig.add_axes([0.025, 0.025, 0.95, 0.95], polar=True)
+        self.ax = self.fig.add_axes([0.025, 0.025, 0.95, 0.95], polar=False)
         self.canvas = tkagg.FigureCanvasTkAgg(self.fig, master=master)
         self.ax.grid(False)
 
@@ -37,6 +38,17 @@ class App(object):
         self.ax.set_yticklabels([])
         self.canvas.get_tk_widget().pack()
         self.canvas.draw()
+        self.canvas.mpl_connect('key_press_event', self.on_key_event)
+        
+    def on_key_event(self,event):
+        if event.key == 'q' or event.key == 'Q':
+            self.quit()
+        print('you pressed %s' % event.key)
+        #key_press_handler(event, self.canvas, toolbar)
+    
+    def quit(self):
+        self.master.quit()
+        self.master.destroy()
 
 
 class Bunch(object):
