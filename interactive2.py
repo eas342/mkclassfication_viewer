@@ -4,8 +4,10 @@ import Tkinter as tk
 import matplotlib.figure as mplfig
 import matplotlib.backends.backend_tkagg as tkagg
 from matplotlib.backend_bases import key_press_handler
+import os
+import sys
+import warnings
 pi = np.pi
-
 
 class App(object):
     def __init__(self, master):
@@ -57,6 +59,9 @@ class App(object):
 
 def main():
     root = tk.Tk()
+    if sys.platform == 'darwin':
+        os.system('''osascript -e 'tell app "Finder" to set frontmost of process "python" to true' ''')
+    
     app = App(root)
     tk.mainloop()
 
