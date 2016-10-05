@@ -1,8 +1,12 @@
 Luminosity:
   1: I
+  1.5: I.5
   2: II
+  2.5: II.5
   3: III
+  3.5: III.5
   4: IV
+  4.5: IV.5
   5: V
 Spectral Code:
   0.0: O3
