@@ -82,6 +82,9 @@ class spectralSequence(object):
         self._lIndex = int(self.nLum - 1)
         
         self.get_spec()
+        
+        self.make_mask_img() ## make a image of 1s and 0s for mask
+        
         self.limits = [0.,2]
         self.get_spec()
         self.xlabel = 'F$_\lambda$'
@@ -129,6 +132,10 @@ class spectralSequence(object):
             
             self.title = specInfo.tClass+' '+specInfo.lClass
     
+    def make_mask_img(self):
+        self.maskImg = np.zeros([self.nTemp,self.nLum])
+        for columnInd, oneColumn in enumerate(self.fileTable.colnames[self.extraColumns:-1]):
+            self.maskImg[:,columnInd] = self.fileTable.mask[oneColumn]
 
     def plot_seq():
         """ Goes through the sequence in the library and makes plots of the spectra"""
