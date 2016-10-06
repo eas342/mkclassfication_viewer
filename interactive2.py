@@ -44,6 +44,18 @@ class sinecurve(object):
     def shift(self,amount):
         self.phase = self.phase + amount
         self.evaluate()
+def confine_range(x,xmin,xmax):
+    """ 
+    Simple function keeps x between xmin and xmax
+    If larger or smaller than the limits, it is kept at the boundary
+    """
+    if x < xmin:
+        outX = xmin
+    elif x > xmax:
+        outX = xmax
+    else:
+        outX = x
+    return outX
 
 class spectralSequence(object):
     """
@@ -76,31 +88,33 @@ class spectralSequence(object):
         self.ylabel = 'Wavelength ($\AA$)'
     
     def right(self):
-        print('no Lum yet')
+        self.change_lumclass(1)
     def left(self):
-        print('no Lum yet')
+        self.change_lumclass(-1)
     def up(self):
-        self.earlier()
+        self.change_tempclass(1)
     def down(self):
-        self.later()
+        self.change_tempclass(-1)
     
-    def earlier(self):
-        if self._tIndex <= 0:
-            self._tIndex = 0
-        else:
-            self._tIndex -= 1
+    def change_tempclass(self,amount):
+        """ 
+        Changes the temperature class by going up by amount in the index of the file Table
+        """
+        self._tIndex = confine_range(self._tIndex + amount,0,self.nTemp-1)
         self.get_spec()
     
-    def later(self):
-        if self._tIndex >= self.nTemp-1:
-            self._tIndex = self.nTemp-1
-        else:
-            self._tIndex += 1
-        self.get_spec()
+    def change_lumclass(self,amount):
+        """ 
+        Changes the luminosity class by going up by amount in the index of the file Table
+        """
+        self._lIndex = confine_range(self._lIndex + amount,0,self.nLum-1)
+        self.get_spec()        
     
     def get_spec(self):
-
-        
+        """
+        Gets a mkspectrum if there is a spectrum with the requested temperature class index
+        and luminosity class index
+        """
         if self.fileTable.mask[self._tIndex][self._lIndex + self.extraColumns] == True:
             print("No library spectrum at "+self.fileTable['Temperature_Class'][self._tIndex]+
                   " and "+self.fileTable.colnames[self._lIndex + self.extraColumns])
