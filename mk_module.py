@@ -13,18 +13,32 @@ spCodes = yaml.load(open('prog_data/stype_dict.yaml'))
 
 libraryDirectory = '../mklib/libnor36'
 
+def dictLookup(dict,item):
+    if item in dict:
+        output = dict[item]
+    else:
+        print("Couldn't find "+str(item)+' so returning None')
+        output = None
+    return output
+    
+
 class mkspectrum(object):
     """
     Finds the spectral and luminosity codes used by mkclass
     Converts these to spectral type
     """
     def __init__(self,oneFile):
+        self.fullPath = oneFile
         self.basename = os.path.basename(oneFile)
         self.tCode = float(self.basename[1:4])/10.0
-        self.tClass = spCodes['Spectral Code'][self.tCode] ## temp class
+        self.tClass = dictLookup(spCodes['Spectral Code'],self.tCode) ## temp class
         self.lCode = float(self.basename[5:7])/10.0
-        self.lClass =  spCodes['Luminosity'][self.lCode] ## luminosity class
+        self.lClass =  dictLookup(spCodes['Luminosity'],self.lCode) ## luminosity class
     
+    def read_spec(self):
+        dat = ascii.read(self.fullPath,names=['Wavelength','Flux'])
+        goodp = dat['Flux'] > 0 ## only show non-zero points
+        self.cleanDat = dat[goodp]
 
 def plot_seq():
     """ Goes through the sequence in the library and makes plots of the spectra"""
@@ -33,12 +47,11 @@ def plot_seq():
     #for oneFile in [fileL[0]]:
     for oneFile in fileL:
         plt.close('all')
-        #pdb.set_trace()
-        dat = ascii.read(oneFile,names=['Wavelength','Flux'])
         fig, ax = plt.subplots(figsize=(8,5))
-        goodp = dat['Flux'] > 0 ## only show non-zero points
-        ax.plot(dat['Wavelength'][goodp],dat['Flux'][goodp])
+        
         specInfo = mkspectrum(oneFile) ## spectral info
+        specInfo.read_spec()
+        ax.plot(specInfo.cleanDat['Wavelength'],specInfo.cleanDat['Flux'])
         
         ax.set_title(specInfo.tClass+' '+specInfo.lClass)
         ax.set_ylabel('F$_\lambda$')
@@ -47,16 +60,38 @@ def plot_seq():
         fig.savefig('plots/main_sequence/'+os.path.splitext(specInfo.basename)[0]+'.pdf')
 
 def make_type_table():
-    fileL = glob.glob('..mklib/libnor36/*.rbn')
-    tcodes = [] ## temperature codes
-    lcodes = [] ## luminosity codes
+    fileL = glob.glob('../mklib/libnor36/*.rbn')
+    tCodes,tTypes = [], [] ## temperature codes and class
+    lCodes = [] ## luminosity codes
     for oneFile in fileL:
-        basename = os.path.basename(oneFile)
-        tempCode = float(basename[1:4])/10.0
-        tcodes.append(tempCode)
-        lCode = float(basename[5:7])/10.0
-        lClass = spCodes['Luminosity'][lCode] ## luminosity class
+        specInfo = mkspectrum(oneFile)
+        tCodes.append(specInfo.tCode)
+        tTypes.append(specInfo.tClass)
+        lCodes.append(specInfo.lCode)
         
-    uniqCodes = np.unique(tcodes)
+    uniqTCodes, uniqTIndices = np.unique(tCodes,return_index=True)
+    nUniqT = uniqTCodes.shape[0]
+    uniqlCodes = np.unique(lCodes)
+    #pdb.set_trace()
     t = Table()
+    
+    t['Temperature_Class'] = np.array(tTypes)[uniqTIndices]
+    t['Temperature_Code'] = uniqTCodes
+    for oneLuminosity in uniqlCodes:
+        t[str(oneLuminosity)] = np.empty(nUniqT,dtype=object)
+    
+    for oneFile in fileL:
+        specInfo = mkspectrum(oneFile)
+        row = (specInfo.tCode == t['Temperature_Code'])
+        column = (str(specInfo.lCode) == np.array(t.colnames))
+        
+        if (np.sum(row) == 1) & (np.sum(column) == 1):
+            t[np.where(row)[0][0]][np.where(column)[0][0]] = specInfo.basename
+        else:
+            print("File "+oneFile+" couldn't be placed in the table")
+            pdb.set_trace()
+        
+    t.write('prog_data/library_table.csv')   
+    #for oneFile in fileL:
+     #   column = 
     #for np.

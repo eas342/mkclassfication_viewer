@@ -11,6 +11,7 @@ from astropy.io import ascii
 import pdb
 import glob
 import yaml
+import mk_module
 
 class sinecurve(object):
     """ A simple sine curve class with amplitude and phase.
@@ -52,11 +53,14 @@ class spectralSequence(object):
         self._typecode = 31.
         self._lumcode = 5
         
-        self.fileList = glob.glob('../mklib/libnor36/*l50p00.rbn')
+        self.fileTable = ascii.read('prog_data/library_table.csv')
+        
+        self.libraryDirectory = mk_module.libraryDirectory
+        self.fileList = glob.glob(self.libraryDirectory+'/*l50p00.rbn')
         self.nFiles = len(self.fileList)
         self.spCodes = yaml.load(open('prog_data/stype_dict.yaml'))
         
-        self._simpleIndex = 30
+        self._tIndex = 30
         self.get_spec()
         self.limits = [0.,2]
         self.get_spec()
@@ -73,31 +77,29 @@ class spectralSequence(object):
         self.later()
     
     def earlier(self):
-        if self._simpleIndex <= 0:
-            self._simpleIndex = 0
+        if self._tIndex <= 0:
+            self._tIndex = 0
         else:
-            self._simpleIndex -= 1
+            self._tIndex -= 1
         self.get_spec()
     
     def later(self):
-        if self._simpleIndex >= self.nFiles-1:
-            self._simpleIndex = self.nFiles-1
+        if self._tIndex >= self.nFiles-1:
+            self._tIndex = self.nFiles-1
         else:
-            self._simpleIndex += 1
+            self._tIndex += 1
         self.get_spec()
     
     def get_spec(self):
-        oneFile = self.fileList[self._simpleIndex]
-        dat = ascii.read(oneFile,names=['Wavelength','Flux'])
-        goodp = dat['Flux'] > 0 ## only show non-zero points
-        self.x = dat['Wavelength'][goodp]
-        self.y = dat['Flux'][goodp]
-        basename = os.path.basename(oneFile)
-        spcode = float(basename[1:4])/10.0
-        self.tClass = self.spCodes['Spectral Code'][spcode] ## temp class
-        lCode = float(basename[5:7])/10.0
-        self.lClass = self.spCodes['Luminosity'][lCode] ## luminosity class
-        self.title = self.tClass+' '+self.lClass
+        oneFile = self.fileList[self._tIndex]
+        
+        specInfo = mk_module.mkspectrum(oneFile)
+        specInfo.read_spec()
+        
+        self.x = specInfo.cleanDat['Wavelength']
+        self.y = specInfo.cleanDat['Flux']
+        
+        self.title = specInfo.tClass+' '+specInfo.lClass
     
 
     def plot_seq():
@@ -189,6 +191,8 @@ def main(**kwargs):
         #I find this useful since my OS X always puts python/tkinter in the background and I want it in the foreground
         os.system('''osascript -e 'tell app "Finder" to set frontmost of process "python" to true' ''')
     tk.mainloop()
+    del app
+    del root
 
 if __name__ == '__main__':
     """ If running from the command line, do the main loop """
