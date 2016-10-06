@@ -53,14 +53,22 @@ class spectralSequence(object):
         self._typecode = 31.
         self._lumcode = 5
         
-        self.fileTable = ascii.read('prog_data/library_table.csv')
+        self.fileTable = ascii.read('prog_data/library_table.csv',data_start=1,
+                                    header_start=0,delimiter=',')
         
         self.libraryDirectory = mk_module.libraryDirectory
-        self.fileList = glob.glob(self.libraryDirectory+'/*l50p00.rbn')
-        self.nFiles = len(self.fileList)
+        self.nTemp = len(self.fileTable)
+        self._tIndex = int(self.nTemp / 2) ## start in the middle
+        
+        ## Spectral code to Spectral type dictionary
         self.spCodes = yaml.load(open('prog_data/stype_dict.yaml'))
         
-        self._tIndex = 30
+        ## Number of spectral types in table
+        ## assumes two columns for spectral type code and spectral type name
+        self.extraColumns = 2
+        self.nLum = len(self.fileTable.colnames) - self.extraColumns
+        self._lIndex = int(self.nLum - 1)
+        
         self.get_spec()
         self.limits = [0.,2]
         self.get_spec()
@@ -84,22 +92,28 @@ class spectralSequence(object):
         self.get_spec()
     
     def later(self):
-        if self._tIndex >= self.nFiles-1:
-            self._tIndex = self.nFiles-1
+        if self._tIndex >= self.nTemp-1:
+            self._tIndex = self.nTemp-1
         else:
             self._tIndex += 1
         self.get_spec()
     
     def get_spec(self):
-        oneFile = self.fileList[self._tIndex]
+
         
-        specInfo = mk_module.mkspectrum(oneFile)
-        specInfo.read_spec()
+        if self.fileTable.mask[self._tIndex][self._lIndex + self.extraColumns] == True:
+            print("No library spectrum at "+self.fileTable['Temperature_Class'][self._tIndex]+
+                  " and "+self.fileTable.colnames[self._lIndex + self.extraColumns])
+        else:
+            basename = self.fileTable[self._tIndex][self._lIndex + self.extraColumns]
+            oneFile = os.path.join(self.libraryDirectory,basename)
+            specInfo = mk_module.mkspectrum(oneFile)
+            specInfo.read_spec()
         
-        self.x = specInfo.cleanDat['Wavelength']
-        self.y = specInfo.cleanDat['Flux']
-        
-        self.title = specInfo.tClass+' '+specInfo.lClass
+            self.x = specInfo.cleanDat['Wavelength']
+            self.y = specInfo.cleanDat['Flux']
+            
+            self.title = specInfo.tClass+' '+specInfo.lClass
     
 
     def plot_seq():
@@ -124,7 +138,6 @@ class spectralSequence(object):
             ax.set_xlabel('Wavelength ($\AA$)')
             ax.set_ylim(0.1,2)
             fig.savefig('plots/main_sequence/'+os.path.splitext(basename)[0]+'.pdf')
-
 
     
 class App(object):
