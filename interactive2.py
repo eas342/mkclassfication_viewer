@@ -4,6 +4,7 @@ import Tkinter as tk
 import matplotlib.figure as mplfig
 import matplotlib.backends.backend_tkagg as tkagg
 from matplotlib.backend_bases import key_press_handler
+import matplotlib.patches as mpatches
 import os
 import sys
 import warnings
@@ -136,30 +137,25 @@ class spectralSequence(object):
         self.maskImg = np.zeros([self.nTemp,self.nLum])
         for columnInd, oneColumn in enumerate(self.fileTable.colnames[self.extraColumns:-1]):
             self.maskImg[:,columnInd] = self.fileTable.mask[oneColumn]
-
-    def plot_seq():
-        """ Goes through the sequence in the library and makes plots of the spectra"""
-        fileL = glob.glob('../mklib/libnor36/*l50p00.rbn')
-
-        #for oneFile in [fileL[0]]:
-        for oneFile in fileL:
-            plt.close('all')
-            #pdb.set_trace()
-            dat = ascii.read(oneFile,names=['Wavelength','Flux'])
-            fig, ax = plt.subplots(figsize=(8,5))
-            goodp = dat['Flux'] > 0 ## only show non-zero points
-            ax.plot(dat['Wavelength'][goodp],dat['Flux'][goodp])
-            basename = os.path.basename(oneFile)
-            spcode = float(basename[1:4])/10.0
-            tClass = spCodes['Spectral Code'][spcode] ## temp class
-            lCode = float(basename[5:7])/10.0
-            lClass = spCodes['Luminosity'][lCode] ## luminosity class
-            ax.set_title(tClass+' '+lClass)
-            ax.set_ylabel('F$_\lambda$')
-            ax.set_xlabel('Wavelength ($\AA$)')
-            ax.set_ylim(0.1,2)
-            fig.savefig('plots/main_sequence/'+os.path.splitext(basename)[0]+'.pdf')
-
+        #plt.imshow(sseq.maskImg,interpolation='none',cmap=plt.cm.YlOrRd)
+    
+    def do_plot(self,axSpec,axClass,firstTime=False):
+        ## Plot the spectrum
+        axSpec.cla()
+        axSpec.plot(self.x,self.y)
+        axSpec.set_ylim(self.limits[0],self.limits[1])
+        axSpec.set_title(self.title)
+        
+        ## Plot the key of spectral type and show what we're currently on
+        if axClass.firstTimeThrough == True:
+            axClass.imshow(self.maskImg,interpolation='none',cmap=plt.cm.YlOrRd)
+            axClass.invert_yaxis()
+            circle = mpatches.Circle([self._lIndex,self._tIndex],1)
+            axClass.add_patch(circle)
+            axClass.firstTimeThrough = False
+        else:
+            axClass.patches[0].center = self._lIndex, self._tIndex
+            
     
 class App(object):
     """ This class is an application widget for interacting with matplotlib
@@ -169,6 +165,8 @@ class App(object):
         #self.fig, self.ax = plt.subplots(figsize=(4,4))
         self.fig = mplfig.Figure(figsize=(15, 4))
         self.ax = self.fig.add_axes([0.1, 0.1, 0.8, 0.8])
+        self.axClass = self.fig.add_axes([0.9,0.1,0.1,0.8])
+        self.axClass.firstTimeThrough = True ## note to set up for first time
         self.canvas = tkagg.FigureCanvasTkAgg(self.fig, master=master)
         
         self.canvas.get_tk_widget().pack()
@@ -178,6 +176,7 @@ class App(object):
             self.function = spectralSequence()
         self.update_plot()
         self.canvas.mpl_connect('key_press_event', self.on_key_event)
+        
     
     def update_plot(self):
         """
@@ -185,10 +184,10 @@ class App(object):
         object. Ideally, it would someday use some fancier motions to avoid
         having to clear and re-draw the plot
         """
-        self.ax.cla()
-        self.ax.plot(self.function.x,self.function.y)
-        self.ax.set_ylim(self.function.limits[0],self.function.limits[1])
-        self.ax.set_title(self.function.title)
+        
+        self.function.do_plot(self.ax,self.axClass)
+        
+        self.fig.canvas.draw()
         self.canvas.draw()
     
     def on_key_event(self,event):
