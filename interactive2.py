@@ -62,7 +62,7 @@ class spectralSequence(object):
     """
     Reads in the available spectral types and allows you to cycle through them
     """
-    def __init__(self):
+    def __init__(self,comparisonSpectrum=None):
         self._typecode = 31.
         self._lumcode = 5
         
@@ -90,6 +90,11 @@ class spectralSequence(object):
         self.get_spec()
         self.xlabel = 'F$_\lambda$'
         self.ylabel = 'Wavelength ($\AA$)'
+        if comparisonSpectrum == None:
+            self.comparisonSpec = None
+        else:
+            self.comparisonSpec = comparisonSpectrum
+            self.comparisonDat = ascii.read(comparisonSpectrum,names=['Wavelength','Flux'])
     
     def right(self):
         self.change_lumclass(1)
@@ -139,20 +144,29 @@ class spectralSequence(object):
             self.maskImg[:,columnInd] = self.fileTable.mask[oneColumn]
         #plt.imshow(sseq.maskImg,interpolation='none',cmap=plt.cm.YlOrRd)
     
-    def do_plot(self,axSpec,axClass,firstTime=False):
+    def do_plot(self,axSpec,axClass):
         ## Plot the spectrum
         axSpec.cla()
-        axSpec.plot(self.x,self.y)
+        axSpec.plot(self.x,self.y,label='Standard')
         axSpec.set_ylim(self.limits[0],self.limits[1])
         axSpec.set_title(self.title)
         
+        if self.comparisonSpec != None:
+            axSpec.plot(self.comparisonDat['Wavelength'],self.comparisonDat['Flux'],
+                        label='Input Spec')
+            axSpec.legend(loc='lower right')
+            
         ## Plot the key of spectral type and show what we're currently on
         if axClass.firstTimeThrough == True:
             axClass.imshow(self.maskImg,interpolation='none',cmap=plt.cm.YlOrRd)
             axClass.invert_yaxis()
             circle = mpatches.Circle([self._lIndex,self._tIndex],1)
             axClass.add_patch(circle)
+            
+            axClass.set_xlabel('Lum Class')
+            axClass.set_ylabel('Temp Class')
             axClass.firstTimeThrough = False
+            
         else:
             axClass.patches[0].center = self._lIndex, self._tIndex
             
@@ -160,10 +174,10 @@ class spectralSequence(object):
 class App(object):
     """ This class is an application widget for interacting with matplotlib
     using tkinter"""
-    def __init__(self, master,apptestmode=False):
+    def __init__(self, master,apptestmode=False,comparisonSpectrum=None):
         self.master = master
         #self.fig, self.ax = plt.subplots(figsize=(4,4))
-        self.fig = mplfig.Figure(figsize=(15, 4))
+        self.fig = mplfig.Figure(figsize=(20, 6))
         self.ax = self.fig.add_axes([0.1, 0.1, 0.8, 0.8])
         self.axClass = self.fig.add_axes([0.9,0.1,0.1,0.8])
         self.axClass.firstTimeThrough = True ## note to set up for first time
@@ -173,7 +187,7 @@ class App(object):
         if apptestmode:
             self.function = sinecurve()
         else:
-            self.function = spectralSequence()
+            self.function = spectralSequence(comparisonSpectrum=comparisonSpectrum)
         self.update_plot()
         self.canvas.mpl_connect('key_press_event', self.on_key_event)
         
@@ -204,6 +218,8 @@ class App(object):
                 print('Nonsensical place reached in code!')
                 pdb.set_trace()
             self.update_plot()
+        elif event.key == 's':
+            self.fig.savefig('plots/current_fig.pdf')
         else:
             print('you pressed %s' % event.key)
         #key_press_handler(event, self.canvas, toolbar)
