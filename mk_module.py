@@ -6,6 +6,7 @@ import yaml
 import glob
 import os
 import pdb
+import es_gen
 
 
 ## Get the dictionary to convert spectral code to spectral type
@@ -39,6 +40,7 @@ class mkspectrum(object):
         dat = ascii.read(self.fullPath,names=['Wavelength','Flux'])
         goodp = dat['Flux'] > 0 ## only show non-zero points
         self.cleanDat = dat[goodp]
+        self.origDat = dat
 
 def plot_seq():
     """ Goes through the sequence in the library and makes plots of the spectra"""
@@ -58,6 +60,49 @@ def plot_seq():
         ax.set_xlabel('Wavelength ($\AA$)')
         ax.set_ylim(0.1,2)
         fig.savefig('plots/main_sequence/'+os.path.splitext(specInfo.basename)[0]+'.pdf')
+
+def normalizeTemplates(doPlot=False):
+    """
+    This normalizes the template spectrum in the library the same way I normalized
+    the spectrum from hectospec
+    """
+    fileL = glob.glob('../mklib/libnor36/*.rbn')
+    
+    startsets = np.arange(3500,6000,150) ## Sets of regions to do polynomial fits over
+    polyord = 5 # polynomial order for de-trending the spectrum
+    
+    for oneFile in [fileL[0]]:
+        specInfo = mkspectrum(oneFile)
+        specInfo.read_spec()
+        
+        
+        xplt = specInfo.origDat['Wavelength']
+        
+        
+        yorig = specInfo.origDat['Flux']
+    
+        # Set up the divided array
+        yfit = np.zeros_like(yorig)
+        ydivide = np.zeros_like(yorig)
+    
+        for setstart in startsets:
+        
+            fitp = np.where((xplt > setstart) & (xplt < (setstart + 150)))
+            #pdb.set_trace()
+            coeff = es_gen.robust_poly(xplt[fitp],yorig[fitp],polyord,sigreject=5.0)
+            ymod = np.poly1d(coeff)
+            # Convolve data
+            yfit[fitp] = ymod(xplt[fitp])
+            ydivide[fitp] = yorig[fitp]/ymod(xplt[fitp])
+        
+        if doPlot == True:
+            fig, ax = plt.subplots(figsize=(15,5))
+            ax.plot(xplt,yorig,label='Original')
+            ax.plot(xplt,yfit,label='Fit')
+            ax.legend()
+            plt.show()
+    
+    
 
 def make_type_table():
     fileL = glob.glob('../mklib/libnor36/*.rbn')
