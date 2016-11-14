@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use('TkAgg')
+
 import matplotlib.pyplot as plt
 import numpy as np
 import Tkinter as tk
@@ -13,6 +16,8 @@ import pdb
 import glob
 import yaml
 import mk_module
+
+
 
 class sinecurve(object):
     """ A simple sine curve class with amplitude and phase.
@@ -158,7 +163,7 @@ class spectralSequence(object):
             
         ## Plot the key of spectral type and show what we're currently on
         if axClass.firstTimeThrough == True:
-            axClass.imshow(self.maskImg,interpolation='none',cmap=plt.cm.YlOrRd)
+            axClass.imshow(self.maskImg,interpolation='nearest',cmap=plt.cm.YlOrRd)
             axClass.invert_yaxis()
             circle = mpatches.Circle([self._lIndex,self._tIndex],1)
             axClass.add_patch(circle)
@@ -219,7 +224,7 @@ class App(object):
                 pdb.set_trace()
             self.update_plot()
         elif event.key == 's':
-            self.fig.savefig('plots/current_fig.pdf')
+            self.fig.savefig('plots/current_fig.pdf',bbox_inches='tight',interpolation='none')
         else:
             print('you pressed %s' % event.key)
         #key_press_handler(event, self.canvas, toolbar)
@@ -233,6 +238,7 @@ def main(**kwargs):
     """
     Main function that creates the tk object and runs it
     """
+    
     root = tk.Tk()
         
     app = App(root,**kwargs)
