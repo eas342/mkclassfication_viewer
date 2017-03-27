@@ -96,9 +96,9 @@ class spectralSequence(object):
         self.xlabel = 'F$_\lambda$'
         self.ylabel = 'Wavelength ($\AA$)'
         if comparisonSpectrum == None:
-            self.comparisonSpec = None
+            self.comparisonSpectrum = None
         else:
-            self.comparisonSpec = comparisonSpectrum
+            self.comparisonSpectrum = comparisonSpectrum
             self.comparisonDat = ascii.read(comparisonSpectrum,names=['Wavelength','Flux'])
     
     def right(self):
@@ -109,6 +109,13 @@ class spectralSequence(object):
         self.change_tempclass(1)
     def down(self):
         self.change_tempclass(-1)
+    
+    def adjust_norm(self,adjust):
+        """ 
+        Adjusts the normalization of the target Spectrum (moving it up or down )
+        """
+        if self.comparisonSpectrum is not None:
+            self.comparisonDat['Flux'] = self.comparisonDat['Flux'] + adjust
     
     def change_tempclass(self,amount):
         """ 
@@ -156,7 +163,7 @@ class spectralSequence(object):
         axSpec.set_ylim(self.limits[0],self.limits[1])
         axSpec.set_title(self.title)
         
-        if self.comparisonSpec != None:
+        if self.comparisonSpectrum != None:
             axSpec.plot(self.comparisonDat['Wavelength'],self.comparisonDat['Flux'],
                         label='Input Spec')
             axSpec.legend(loc='lower right')
@@ -214,15 +221,20 @@ class App(object):
         Tests the keyboard event to """
         if event.key == 'q' or event.key == 'Q':
             self.quit()
-        elif event.key in ['right','left','up','down']:
+        elif event.key in ['right','left','up','down','u','j']:
+            ## In this section, all changes will update the plot
             if event.key == 'right': self.function.right()
             elif event.key == 'left' : self.function.left()
             elif event.key == 'up' : self.function.up()
             elif event.key == 'down' : self.function.down()
+            elif event.key == 'u': self.function.adjust_norm(+0.1)
+            elif event.key == 'j': self.function.adjust_norm(-0.1)
             else: 
                 print('Nonsensical place reached in code!')
                 pdb.set_trace()
             self.update_plot()
+        elif event.key == 'u': self.adjust_norm(+0.1)
+        elif event.key == 'j': self.adjust_norm(-0.1)
         elif event.key == 's':
             self.fig.savefig('plots/current_fig.pdf',bbox_inches='tight',interpolation='none')
         else:
