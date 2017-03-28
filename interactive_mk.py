@@ -4,6 +4,7 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import numpy as np
 import Tkinter as tk
+import tkFileDialog
 import matplotlib.figure as mplfig
 import matplotlib.backends.backend_tkagg as tkagg
 from matplotlib.backend_bases import key_press_handler
@@ -67,7 +68,8 @@ class spectralSequence(object):
     """
     Reads in the available spectral types and allows you to cycle through them
     """
-    def __init__(self,comparisonSpectrum=None):
+    def __init__(self,comparisonSpectrum=None,
+                initialdir='/Users/everettschlawin/Documents/jwst/nircam_photcal/general_photcal_code/output_rectified/NGC_2420'):
         self._typecode = 31.
         self._lumcode = 5
         
@@ -95,11 +97,8 @@ class spectralSequence(object):
         self.get_spec()
         self.xlabel = 'F$_\lambda$'
         self.ylabel = 'Wavelength ($\AA$)'
-        if comparisonSpectrum == None:
-            self.comparisonSpectrum = None
-        else:
-            self.comparisonSpectrum = comparisonSpectrum
-            self.comparisonDat = ascii.read(comparisonSpectrum,names=['Wavelength','Flux'])
+        self.initialdir=initialdir
+        self.get_comparison_spec(comparisonSpectrum)
     
     def right(self):
         self.change_lumclass(1)
@@ -109,6 +108,15 @@ class spectralSequence(object):
         self.change_tempclass(1)
     def down(self):
         self.change_tempclass(-1)
+    
+    def get_comparison_spec(self,comparisonSpectrum):
+        """ Gets a comparison spectrum for a given file name
+        """
+        if comparisonSpectrum == None:
+            self.comparisonSpectrum = None
+        else:
+            self.comparisonSpectrum = comparisonSpectrum
+            self.comparisonDat = ascii.read(comparisonSpectrum,names=['Wavelength','Flux'])
     
     def adjust_norm(self,adjust):
         """ 
@@ -164,8 +172,9 @@ class spectralSequence(object):
         axSpec.set_title(self.title)
         
         if self.comparisonSpectrum != None:
+            comparisonName = os.path.splitext(os.path.basename(self.comparisonSpectrum))[0]
             axSpec.plot(self.comparisonDat['Wavelength'],self.comparisonDat['Flux'],
-                        label='Input Spec')
+                        label=comparisonName)
             axSpec.legend(loc='lower right')
             
         ## Plot the key of spectral type and show what we're currently on
@@ -221,7 +230,7 @@ class App(object):
         Tests the keyboard event to """
         if event.key == 'q' or event.key == 'Q':
             self.quit()
-        elif event.key in ['right','left','up','down','u','j']:
+        elif event.key in ['right','left','up','down','u','j','o']:
             ## In this section, all changes will update the plot
             if event.key == 'right': self.function.right()
             elif event.key == 'left' : self.function.left()
@@ -229,12 +238,16 @@ class App(object):
             elif event.key == 'down' : self.function.down()
             elif event.key == 'u': self.function.adjust_norm(+0.1)
             elif event.key == 'j': self.function.adjust_norm(-0.1)
+            elif event.key == 'o': 
+                filename = tkFileDialog.askopenfilename(initialdir=self.function.initialdir)
+                self.function.get_comparison_spec(filename)
             else: 
                 print('Nonsensical place reached in code!')
                 pdb.set_trace()
             self.update_plot()
-        elif event.key == 'u': self.adjust_norm(+0.1)
-        elif event.key == 'j': self.adjust_norm(-0.1)
+        elif event.key == 'u': self.function.adjust_norm(+0.05)
+        elif event.key == 'j': self.function.adjust_norm(-0.05)
+        
         elif event.key == 's':
             self.fig.savefig('plots/current_fig.pdf',bbox_inches='tight',interpolation='none')
         else:
