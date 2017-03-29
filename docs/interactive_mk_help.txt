@@ -1,0 +1,8 @@
+Interactive MK Classification Widget Help
+
+Key bindings
+Left/Right - Move along luminosity class in template library
+Up/Down - Move along temperature class in template library
+q or Q - quit
+s - save a plot of the current view
+u/j - move the target spectrum up and down (if it exists)

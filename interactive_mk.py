@@ -68,10 +68,12 @@ class spectralSequence(object):
     """
     Reads in the available spectral types and allows you to cycle through them
     """
-    def __init__(self,comparisonSpectrum=None,
+    def __init__(self,comparisonSpectrum=None,verbose=False,
                 initialdir='/Users/everettschlawin/Documents/jwst/nircam_photcal/general_photcal_code/output_rectified/NGC_2420'):
         self._typecode = 31.
         self._lumcode = 5
+        
+        self.verbose = verbose
         
         self.fileTable = ascii.read('prog_data/library_table.csv',data_start=1,
                                     header_start=0,delimiter=',')
@@ -145,8 +147,9 @@ class spectralSequence(object):
         and luminosity class index
         """
         if self.fileTable.mask[self._tIndex][self._lIndex + self.extraColumns] == True:
-            print("No library spectrum at "+self.fileTable['Temperature_Class'][self._tIndex]+
-                  " and "+self.fileTable.colnames[self._lIndex + self.extraColumns])
+            if self.verbose == True:
+                print("No library spectrum at "+self.fileTable['Temperature_Class'][self._tIndex]+
+                      " and "+self.fileTable.colnames[self._lIndex + self.extraColumns])
         else:
             basename = self.fileTable[self._tIndex][self._lIndex + self.extraColumns]
             oneFile = os.path.join(self.libraryDirectory,basename)
@@ -211,7 +214,7 @@ class App(object):
             self.function = spectralSequence(comparisonSpectrum=comparisonSpectrum)
         self.update_plot()
         self.canvas.mpl_connect('key_press_event', self.on_key_event)
-        
+        self.helpWindow = None
     
     def update_plot(self):
         """
@@ -245,6 +248,13 @@ class App(object):
                 print('Nonsensical place reached in code!')
                 pdb.set_trace()
             self.update_plot()
+        elif event.key == 'h':
+            self.helpWindow = tk.Tk()
+            TWidg = tk.Text(self.helpWindow)#,height=5,width=30)
+            with open('docs/interactive_mk_help.txt','r') as helpFile:
+                helpText = helpFile.readlines()
+            TWidg.pack()
+            TWidg.insert(tk.END, "".join(helpText))
         elif event.key == 'u': self.function.adjust_norm(+0.05)
         elif event.key == 'j': self.function.adjust_norm(-0.05)
         
