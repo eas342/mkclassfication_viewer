@@ -68,7 +68,7 @@ class spectralSequence(object):
     """
     Reads in the available spectral types and allows you to cycle through them
     """
-    def __init__(self,comparisonSpectrum=None,verbose=False,
+    def __init__(self,comparisonSpectrum=None,verbose=False,zoomState='In',
                 initialdir='/Users/everettschlawin/Documents/jwst/nircam_photcal/general_photcal_code/output_rectified/NGC_2420'):
         self._typecode = 31.
         self._lumcode = 5
@@ -101,6 +101,7 @@ class spectralSequence(object):
         self.ylabel = 'Wavelength ($\AA$)'
         self.initialdir=initialdir
         self.get_comparison_spec(comparisonSpectrum)
+        self.zoomState = zoomState
     
     def right(self):
         self.change_lumclass(1)
@@ -174,11 +175,16 @@ class spectralSequence(object):
         axSpec.set_ylim(self.limits[0],self.limits[1])
         axSpec.set_title(self.title)
         
+        if self.zoomState == 'In':
+            axSpec.set_xlim(3800,4600)
+                        
         if self.comparisonSpectrum != None:
             comparisonName = os.path.splitext(os.path.basename(self.comparisonSpectrum))[0]
             axSpec.plot(self.comparisonDat['Wavelength'],self.comparisonDat['Flux'],
                         label=comparisonName)
             axSpec.legend(loc='lower right')
+
+            
             
         ## Plot the key of spectral type and show what we're currently on
         if axClass.firstTimeThrough == True:
@@ -193,6 +199,12 @@ class spectralSequence(object):
             
         else:
             axClass.patches[0].center = self._lIndex, self._tIndex
+            
+    def zoom(self):
+        if self.zoomState == 'In':
+            self.zoomState = 'Out'
+        else:
+            self.zoomState = 'In'
             
     
 class App(object):
@@ -224,7 +236,6 @@ class App(object):
         """
         
         self.function.do_plot(self.ax,self.axClass)
-        
         self.fig.canvas.draw()
         self.canvas.draw()
     
@@ -233,7 +244,7 @@ class App(object):
         Tests the keyboard event to """
         if event.key == 'q' or event.key == 'Q':
             self.quit()
-        elif event.key in ['right','left','up','down','u','j','o']:
+        elif event.key in ['right','left','up','down','u','j','o','z']:
             ## In this section, all changes will update the plot
             if event.key == 'right': self.function.right()
             elif event.key == 'left' : self.function.left()
@@ -244,6 +255,7 @@ class App(object):
             elif event.key == 'o': 
                 filename = tkFileDialog.askopenfilename(initialdir=self.function.initialdir)
                 self.function.get_comparison_spec(filename)
+            elif event.key == 'z': self.function.zoom()
             else: 
                 print('Nonsensical place reached in code!')
                 pdb.set_trace()
