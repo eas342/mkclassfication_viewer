@@ -102,6 +102,9 @@ class spectralSequence(object):
         self.initialdir=initialdir
         self.get_comparison_spec(comparisonSpectrum)
         self.zoomState = zoomState
+        
+        self.showLines = True
+        self.specFeatures = ascii.read('prog_data/spec_features.csv')
     
     def right(self):
         self.change_lumclass(1)
@@ -199,12 +202,22 @@ class spectralSequence(object):
             
         else:
             axClass.patches[0].center = self._lIndex, self._tIndex
+        
+        if self.showLines == True:
+            for oneLine in self.specFeatures:
+                showX = oneLine['Feature Wavelength']
+                axSpec.plot([showX,showX],[1.0,1.1],color='black')
+                axSpec.text(showX,1.1,oneLine['Feature Name'],rotation=45,
+                            horizontalalignment='left',verticalalignment='bottom')
             
     def zoom(self):
         if self.zoomState == 'In':
             self.zoomState = 'Out'
         else:
             self.zoomState = 'In'
+    
+    def toggle_lines(self):
+        self.showLines = not self.showLines
             
     
 class App(object):
@@ -244,7 +257,7 @@ class App(object):
         Tests the keyboard event to """
         if event.key == 'q' or event.key == 'Q':
             self.quit()
-        elif event.key in ['right','left','up','down','u','j','o','z']:
+        elif event.key in ['right','left','up','down','u','j','o','z','l']:
             ## In this section, all changes will update the plot
             if event.key == 'right': self.function.right()
             elif event.key == 'left' : self.function.left()
@@ -256,6 +269,7 @@ class App(object):
                 filename = tkFileDialog.askopenfilename(initialdir=self.function.initialdir)
                 self.function.get_comparison_spec(filename)
             elif event.key == 'z': self.function.zoom()
+            elif event.key == 'l': self.function.toggle_lines()
             else: 
                 print('Nonsensical place reached in code!')
                 pdb.set_trace()
