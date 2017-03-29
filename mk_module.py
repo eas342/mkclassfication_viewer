@@ -7,12 +7,18 @@ import glob
 import os
 import pdb
 import es_gen
+import pandas as pd
 
 
 ## Get the dictionary to convert spectral code to spectral type
 spCodes = yaml.load(open('prog_data/stype_dict.yaml'))
 
 libraryDirectory = '../mklib/libnor36'
+
+def make_line_csv():
+    """ Make as a CSV from the Excel line list """
+    dat = pd.read_excel('prog_data/spec_features.xlsx')
+    dat.to_csv('prog_data/spec_features.csv',index=False)
 
 def dictLookup(dict,item):
     if item in dict:
