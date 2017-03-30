@@ -56,22 +56,30 @@ def confine_range(x,xmin,xmax):
     Simple function keeps x between xmin and xmax
     If larger or smaller than the limits, it is kept at the boundary
     """
-    if x < xmin:
-        outX = xmin
-    elif x > xmax:
-        outX = xmax
-    else:
-        outX = x
+    outX = np.array(x)
+    outX[outX < xmin] = xmin
+    outX[outX > xmax] = xmax
     return outX
 
 class spectralSequence(object):
     """
     Reads in the available spectral types and allows you to cycle through them
+    
+    Parameters
+    --------------------
+    comparisonSpectrum: str
+        A directory path of a target spectrum
+    verbose: bool
+        Whether to print extra info
+    zoomState: str
+        Whether to start zoomed 'In' or 'Out'
+    nShow: int
+        The number of reference spectra to show
+    initialdir: str
+        The directory where to search for new target spectrum for spectral typing 
     """
-    def __init__(self,comparisonSpectrum=None,verbose=False,zoomState='In',
+    def __init__(self,comparisonSpectrum=None,verbose=True,zoomState='In',nShow=2,
                 initialdir='/Users/everettschlawin/Documents/jwst/nircam_photcal/general_photcal_code/output_rectified/NGC_2420'):
-        self._typecode = 31.
-        self._lumcode = 5
         
         self.verbose = verbose
         
@@ -80,7 +88,10 @@ class spectralSequence(object):
         
         self.libraryDirectory = mk_module.libraryDirectory
         self.nTemp = len(self.fileTable)
-        self._tIndex = int(self.nTemp / 2) ## start in the middle
+        firstTIndex = int(self.nTemp / 2) ## start in the middle
+        
+        self._nIndex = nShow
+        self._tIndex = firstTIndex - np.arange(nShow)
         
         ## Spectral code to Spectral type dictionary
         self.spCodes = yaml.load(open('prog_data/stype_dict.yaml'))
@@ -89,13 +100,18 @@ class spectralSequence(object):
         ## assumes two columns for spectral type code and spectral type name
         self.extraColumns = 2
         self.nLum = len(self.fileTable.colnames) - self.extraColumns
-        self._lIndex = int(self.nLum - 1)
+        self._lIndex = int(self.nLum - 1) * np.ones(nShow,dtype=np.int)
+        
+        ## Prepare the x,y and titles for 2 reference spec
+        self.x = [None,None]
+        self.y = [None,None]
+        self.title = [None,None]
         
         self.get_spec()
         
         self.make_mask_img() ## make a image of 1s and 0s for mask
         
-        self.limits = [0.,2]
+        self.limits = [0.,3.]
         self.get_spec()
         self.xlabel = 'F$_\lambda$'
         self.ylabel = 'Wavelength ($\AA$)'
@@ -143,27 +159,31 @@ class spectralSequence(object):
         Changes the luminosity class by going up by amount in the index of the file Table
         """
         self._lIndex = confine_range(self._lIndex + amount,0,self.nLum-1)
-        self.get_spec()        
+        self.get_spec()
     
     def get_spec(self):
         """
         Gets a mkspectrum if there is a spectrum with the requested temperature class index
         and luminosity class index
         """
-        if self.fileTable.mask[self._tIndex][self._lIndex + self.extraColumns] == True:
-            if self.verbose == True:
-                print("No library spectrum at "+self.fileTable['Temperature_Class'][self._tIndex]+
-                      " and "+self.fileTable.colnames[self._lIndex + self.extraColumns])
-        else:
-            basename = self.fileTable[self._tIndex][self._lIndex + self.extraColumns]
-            oneFile = os.path.join(self.libraryDirectory,basename)
-            specInfo = mk_module.mkspectrum(oneFile)
-            specInfo.read_spec()
         
-            self.x = specInfo.cleanDat['Wavelength']
-            self.y = specInfo.cleanDat['Flux']
+        for indInd in range(self._nIndex):
+            oneTIndex, oneLIndex = self._tIndex[indInd], self._lIndex[indInd]
             
-            self.title = specInfo.tClass+' '+specInfo.lClass
+            if self.verbose == True:
+                if np.all(self.fileTable.mask[oneTIndex][oneLIndex + self.extraColumns]) == True:
+                    print("No library spectrum at "+self.fileTable['Temperature_Class'][oneTIndex]+
+                          " and "+self.fileTable.colnames[oneLIndex + self.extraColumns])
+                else:
+                    basename = self.fileTable[oneTIndex][oneLIndex + self.extraColumns]
+                    oneFile = os.path.join(self.libraryDirectory,basename)
+                    specInfo = mk_module.mkspectrum(oneFile)
+                    specInfo.read_spec()
+                    
+                    self.x[indInd] = specInfo.cleanDat['Wavelength']
+                    self.y[indInd] = specInfo.cleanDat['Flux']
+                    
+                    self.title[indInd] = specInfo.tClass+' '+specInfo.lClass
     
     def make_mask_img(self):
         self.maskImg = np.zeros([self.nTemp,self.nLum])
@@ -174,9 +194,13 @@ class spectralSequence(object):
     def do_plot(self,axSpec,axClass):
         ## Plot the spectrum
         axSpec.cla()
-        axSpec.plot(self.x,self.y,label='Standard')
+        
+        linePlots = []
+        for indInd in range(self._nIndex):
+            thisPlot = axSpec.plot(self.x[indInd],self.y[indInd] + 1. * (self._nIndex - 1 - indInd),label='St '+self.title[indInd])
+            linePlots.append(thisPlot)
+        
         axSpec.set_ylim(self.limits[0],self.limits[1])
-        axSpec.set_title(self.title)
         
         if self.zoomState == 'In':
             axSpec.set_xlim(3800,4600)
@@ -185,23 +209,25 @@ class spectralSequence(object):
             comparisonName = os.path.splitext(os.path.basename(self.comparisonSpectrum))[0]
             axSpec.plot(self.comparisonDat['Wavelength'],self.comparisonDat['Flux'],
                         label=comparisonName)
-            axSpec.legend(loc='lower right')
-
+        axSpec.legend(loc='lower right')
+        
             
             
         ## Plot the key of spectral type and show what we're currently on
         if axClass.firstTimeThrough == True:
             axClass.imshow(self.maskImg,interpolation='nearest',cmap=plt.cm.YlOrRd)
             axClass.invert_yaxis()
-            circle = mpatches.Circle([self._lIndex,self._tIndex],1)
-            axClass.add_patch(circle)
+            for indInd in range(self._nIndex):
+                circle = mpatches.Circle([self._lIndex[indInd],self._tIndex[indInd]],1,color=linePlots[indInd][0].get_color())
+                axClass.add_patch(circle)
             
             axClass.set_xlabel('Lum Class')
             axClass.set_ylabel('Temp Class')
             axClass.firstTimeThrough = False
             
         else:
-            axClass.patches[0].center = self._lIndex, self._tIndex
+            for indInd in range(self._nIndex):
+                axClass.patches[indInd].center = self._lIndex[indInd], self._tIndex[indInd]
         
         if self.showLines == True:
             for oneLine in self.specFeatures:
