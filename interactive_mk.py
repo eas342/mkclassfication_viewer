@@ -192,7 +192,7 @@ class spectralSequence(object):
             self.maskImg[:,columnInd] = self.fileTable.mask[oneColumn]
         #plt.imshow(sseq.maskImg,interpolation='none',cmap=plt.cm.YlOrRd)
     
-    def do_plot(self,axSpec,axClass):
+    def do_plot(self,fig,axSpec,axClass):
         ## Plot the spectrum
         axSpec.cla()
         
@@ -221,6 +221,20 @@ class spectralSequence(object):
             for indInd in range(self._nIndex):
                 circle = mpatches.Circle([self._lIndex[indInd],self._tIndex[indInd]],1,color=linePlots[indInd][0].get_color())
                 axClass.add_patch(circle)
+            
+            ## Replace the labels with actual terms
+            fig.canvas.draw()
+            showLumIndices = [0,3,5,8]
+            showLumLabels = ['Ia','II','III','V']
+            axClass.set_xticks(showLumIndices)
+            axClass.set_xticklabels(showLumLabels)
+            
+            showTLabels = ['O6','B0','B5','A0','A5','F0','F5','G0','G5','K0','K5','M0','M5']
+            showTIndices = []
+            for oneTempClass in showTLabels:
+                showTIndices.append(np.where(self.fileTable['Temperature_Class'] == oneTempClass)[0][0])
+            axClass.set_yticks(showTIndices)
+            axClass.set_yticklabels(showTLabels)
             
             axClass.set_xlabel('Lum Class')
             axClass.set_ylabel('Temp Class')
@@ -275,7 +289,7 @@ class App(object):
         having to clear and re-draw the plot
         """
         
-        self.function.do_plot(self.ax,self.axClass)
+        self.function.do_plot(self.fig,self.ax,self.axClass)
         self.fig.canvas.draw()
         self.canvas.draw()
     
