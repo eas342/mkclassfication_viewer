@@ -78,7 +78,7 @@ class spectralSequence(object):
     initialdir: str
         The directory where to search for new target spectrum for spectral typing 
     """
-    def __init__(self,comparisonSpectrum=None,verbose=True,zoomState='In',nShow=2,
+    def __init__(self,comparisonSpectrum=None,verbose=False,zoomState='In',nShow=2,
                 initialdir='/Users/everettschlawin/Documents/jwst/nircam_photcal/general_photcal_code/output_rectified/NGC_2420'):
         
         self.verbose = verbose
@@ -103,9 +103,9 @@ class spectralSequence(object):
         self._lIndex = int(self.nLum - 1) * np.ones(nShow,dtype=np.int)
         
         ## Prepare the x,y and titles for 2 reference spec
-        self.x = [None,None]
-        self.y = [None,None]
-        self.title = [None,None]
+        self.x = [None] * self._nIndex
+        self.y = [None] * self._nIndex
+        self.title = [None] * self._nIndex
         
         self.get_spec()
         
@@ -170,24 +170,25 @@ class spectralSequence(object):
         for indInd in range(self._nIndex):
             oneTIndex, oneLIndex = self._tIndex[indInd], self._lIndex[indInd]
             
-            if self.verbose == True:
-                if np.all(self.fileTable.mask[oneTIndex][oneLIndex + self.extraColumns]) == True:
+            
+            if np.all(self.fileTable.mask[oneTIndex][oneLIndex + self.extraColumns]) == True:
+                if self.verbose == True:
                     print("No library spectrum at "+self.fileTable['Temperature_Class'][oneTIndex]+
                           " and "+self.fileTable.colnames[oneLIndex + self.extraColumns])
-                else:
-                    basename = self.fileTable[oneTIndex][oneLIndex + self.extraColumns]
-                    oneFile = os.path.join(self.libraryDirectory,basename)
-                    specInfo = mk_module.mkspectrum(oneFile)
-                    specInfo.read_spec()
-                    
-                    self.x[indInd] = specInfo.cleanDat['Wavelength']
-                    self.y[indInd] = specInfo.cleanDat['Flux']
-                    
-                    self.title[indInd] = specInfo.tClass+' '+specInfo.lClass
+            else:
+                basename = self.fileTable[oneTIndex][oneLIndex + self.extraColumns]
+                oneFile = os.path.join(self.libraryDirectory,basename)
+                specInfo = mk_module.mkspectrum(oneFile)
+                specInfo.read_spec()
+                
+                self.x[indInd] = specInfo.cleanDat['Wavelength']
+                self.y[indInd] = specInfo.cleanDat['Flux']
+                
+                self.title[indInd] = specInfo.tClass+' '+specInfo.lClass
     
     def make_mask_img(self):
         self.maskImg = np.zeros([self.nTemp,self.nLum])
-        for columnInd, oneColumn in enumerate(self.fileTable.colnames[self.extraColumns:-1]):
+        for columnInd, oneColumn in enumerate(self.fileTable.colnames[self.extraColumns:]):
             self.maskImg[:,columnInd] = self.fileTable.mask[oneColumn]
         #plt.imshow(sseq.maskImg,interpolation='none',cmap=plt.cm.YlOrRd)
     
