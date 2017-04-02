@@ -151,6 +151,11 @@ class spectralSequence(object):
         """ 
         Changes the temperature class by going up by amount in the index of the file Table
         """
+        if not np.all(self._lIndex == self._lIndex[0]):
+            ## Check that the reference stars have the same luminosity index
+            self._lIndex = self._lIndex[0] * np.ones(self._nIndex,dtype=np.int)
+            self._tIndex = self._tIndex[0] - np.arange(self._nIndex)
+        
         self._tIndex = confine_range(self._tIndex + amount,0,self.nTemp-1)
         self.get_spec()
     
@@ -158,6 +163,11 @@ class spectralSequence(object):
         """ 
         Changes the luminosity class by going up by amount in the index of the file Table
         """
+        if not np.all(self._tIndex == self._tIndex[0]):
+            ## Check that the reference stars have the same temperature index
+            self._lIndex = self._lIndex[0] - np.arange(self._nIndex)
+            self._tIndex = self._tIndex[0] * np.ones(self._nIndex,dtype=np.int)
+        
         self._lIndex = confine_range(self._lIndex + amount,0,self.nLum-1)
         self.get_spec()
     
