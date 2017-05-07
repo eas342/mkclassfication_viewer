@@ -139,6 +139,7 @@ class spectralSequence(object):
         else:
             self.comparisonSpectrum = comparisonSpectrum
             self.comparisonDat = ascii.read(comparisonSpectrum,names=['Wavelength','Flux'])
+            self.comparisonName = os.path.splitext(os.path.basename(self.comparisonSpectrum))[0]
     
     def adjust_norm(self,adjust):
         """ 
@@ -195,6 +196,14 @@ class spectralSequence(object):
                 self.y[indInd] = specInfo.cleanDat['Flux']
                 
                 self.title[indInd] = specInfo.tClass+' '+specInfo.lClass
+    
+    def print_to_file(self):
+        """ Prints the assigned spectral type to file
+        For now, it uses the spectral type of the top spectrum """
+        if self.comparisonSpectrum != None:
+            spType = self.title[0]
+            with open('output/type_output.txt','a') as outFile:
+                outFile.write(self.comparisonName+' '+spType+'\n')
     
     def make_mask_img(self):
         self.maskImg = np.zeros([self.nTemp,self.nLum])
@@ -332,13 +341,14 @@ class App(object):
                 helpText = helpFile.readlines()
             TWidg.pack()
             TWidg.insert(tk.END, "".join(helpText))
+        elif event.key == 'p': self.function.print_to_file()
         elif event.key == 'u': self.function.adjust_norm(+0.05)
         elif event.key == 'j': self.function.adjust_norm(-0.05)
         
         elif event.key == 's':
             self.fig.savefig('plots/current_fig.pdf',bbox_inches='tight',interpolation='none')
         else:
-            print('you pressed %s' % event.key)
+            print('  %s' % event.key)
         #key_press_handler(event, self.canvas, toolbar)
     
     def quit(self):
