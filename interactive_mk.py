@@ -221,6 +221,8 @@ class spectralSequence(object):
             linePlots.append(thisPlot)
         
         axSpec.set_ylim(self.limits[0],self.limits[1])
+        axSpec.set_xlabel('Wavelength ($\AA$)')
+        axSpec.set_ylabel('Norm Flux')
         
         if self.zoomState == 'In':
             axSpec.set_xlim(3800,4600)
