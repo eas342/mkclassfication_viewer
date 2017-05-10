@@ -268,8 +268,9 @@ class spectralSequence(object):
         if self.showLines == True:
             for oneLine in self.specFeatures:
                 showX = oneLine['Feature Wavelength']
-                axSpec.plot([showX,showX],[1.0,1.1],color='black')
-                axSpec.text(showX,1.1,oneLine['Feature Name'],rotation=45,
+                showY = 2.
+                axSpec.plot([showX,showX],[showY,showY + 0.1],color='black')
+                axSpec.text(showX,showY + 0.1,oneLine['Feature Name'],rotation=45,
                             horizontalalignment='left',verticalalignment='bottom')
             
     def zoom(self):
