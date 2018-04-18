@@ -121,6 +121,7 @@ class spectralSequence(object):
         
         self.showLines = True
         self.specFeatures = ascii.read('prog_data/spec_features.csv')
+        self.normStepSize = 0.1 ## the step size of normalization adjustments
     
     def right(self):
         self.change_lumclass(1)
@@ -141,12 +142,28 @@ class spectralSequence(object):
             self.comparisonDat = ascii.read(comparisonSpectrum,names=['Wavelength','Flux'])
             self.comparisonName = os.path.splitext(os.path.basename(self.comparisonSpectrum))[0]
     
-    def adjust_norm(self,adjust):
+    def adjust_norm_step(self,factor):
+        """
+        Adjusts the step size of the normalization
+        Parameters
+        ----------
+        factor: float
+            Factor to multiply the step size by.
+            For example 0.5 would shrink the step size by 2
+        """
+        self.normStepSize = self.normStepSize * factor
+        
+    
+    def adjust_norm(self,direction):
         """ 
         Adjusts the normalization of the target Spectrum (moving it up or down )
+        Parameters
+        -----------
+        direction: int
+            Direction of which way to move normalization (+1/-1)
         """
         if self.comparisonSpectrum is not None:
-            self.comparisonDat['Flux'] = self.comparisonDat['Flux'] + adjust
+            self.comparisonDat['Flux'] = self.comparisonDat['Flux'] + self.normStepSize * direction
     
     def change_tempclass(self,amount):
         """ 
@@ -320,14 +337,16 @@ class App(object):
         Tests the keyboard event to """
         if event.key == 'q' or event.key == 'Q':
             self.quit()
-        elif event.key in ['right','left','up','down','u','j','o','z','l']:
+        elif event.key in ['right','left','up','down','u','j','o','z','l','y','t']:
             ## In this section, all changes will update the plot
             if event.key == 'right': self.function.right()
             elif event.key == 'left' : self.function.left()
             elif event.key == 'up' : self.function.up()
             elif event.key == 'down' : self.function.down()
-            elif event.key == 'u': self.function.adjust_norm(+0.1)
-            elif event.key == 'j': self.function.adjust_norm(-0.1)
+            elif event.key == 'u': self.function.adjust_norm(+1)
+            elif event.key == 'j': self.function.adjust_norm(-1)
+            elif event.key == 'y': self.function.adjust_norm_step(2.0)
+            elif event.key == 't': self.function.adjust_norm_step(0.5)
             elif event.key == 'o': 
                 filename = tkFileDialog.askopenfilename(initialdir=self.function.initialdir)
                 self.function.get_comparison_spec(filename)
@@ -344,10 +363,7 @@ class App(object):
                 helpText = helpFile.readlines()
             TWidg.pack()
             TWidg.insert(tk.END, "".join(helpText))
-        elif event.key == 'p': self.function.print_to_file()
-        elif event.key == 'u': self.function.adjust_norm(+0.05)
-        elif event.key == 'j': self.function.adjust_norm(-0.05)
-        
+        elif event.key == 'p': self.function.print_to_file()        
         elif event.key == 's':
             self.fig.savefig('plots/current_fig.pdf',bbox_inches='tight',interpolation='none')
         else:

@@ -6,4 +6,6 @@ Up/Down - Move along temperature class in template library
 q or Q - quit
 s - save a plot of the current view
 u/j - move the target spectrum up and down (if it exists)
+y/t - adjust the step size of the target spectrum movements
 o - open a file of a measured spectrum from the default directory
+z - zoom in/out to optical classification range (3800 to 4600 angstroms)
