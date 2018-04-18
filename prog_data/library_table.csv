@@ -27,7 +27,6 @@ F6,27.0,,t270l10p00.rbn,,,,t270l30p00.rbn,,,t270l50p00.rbn
 F8,28.0,t280l00p00.rbn,t280l10p00.rbn,,,,t280l30p00.rbn,,,t280l50p00.rbn
 F9,29.0,,t290l10p00.rbn,,,,t290l30p00.rbn,,,t290l50p00.rbn
 G0,30.0,,t300l10p00.rbn,,,,t300l30p00.rbn,,t300l40p00.rbn,t300l50p00.rbn
-G1.5,30.7,,,,,,,,,t307l50p00.rbn
 G2,31.0,,t310l10p00.rbn,,,,t310l30p00.rbn,,,t310l50p00.rbn
 G5,32.0,,t320l10p00.rbn,,,,t320l30p00.rbn,,t320l40p00.rbn,t320l50p00.rbn
 G8,33.0,,t330l10p00.rbn,,,,t330l30p00.rbn,,t330l40p00.rbn,t330l50p00.rbn
