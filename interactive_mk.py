@@ -79,7 +79,7 @@ class spectralSequence(object):
         The directory where to search for new target spectrum for spectral typing 
     """
     def __init__(self,comparisonSpectrum=None,verbose=False,zoomState='In',nShow=2,
-                initialdir='/Users/everettschlawin/Documents/jwst/nircam_photcal/general_photcal_code/output_rectified/NGC_2420'):
+                initialdir=None):
         
         self.verbose = verbose
         
@@ -115,6 +115,9 @@ class spectralSequence(object):
         self.get_spec()
         self.xlabel = 'F$_\lambda$'
         self.ylabel = 'Wavelength ($\AA$)'
+        ## Initial directory
+        ## I have been using '/Users/everettschlawin/Documents/jwst/nircam_photcal/general_photcal_code/output_rectified/NGC_2420'
+        
         self.initialdir=initialdir
         self.get_comparison_spec(comparisonSpectrum)
         self.zoomState = zoomState
@@ -303,7 +306,8 @@ class spectralSequence(object):
 class App(object):
     """ This class is an application widget for interacting with matplotlib
     using tkinter"""
-    def __init__(self, master,apptestmode=False,comparisonSpectrum=None):
+    def __init__(self, master,apptestmode=False,comparisonSpectrum=None,
+                 initialdir=None):
         self.master = master
         #self.fig, self.ax = plt.subplots(figsize=(4,4))
         self.fig = mplfig.Figure(figsize=(20, 6))
@@ -316,7 +320,8 @@ class App(object):
         if apptestmode:
             self.function = sinecurve()
         else:
-            self.function = spectralSequence(comparisonSpectrum=comparisonSpectrum)
+            self.function = spectralSequence(comparisonSpectrum=comparisonSpectrum,
+                                             initialdir=initialdir)
         self.update_plot()
         self.canvas.mpl_connect('key_press_event', self.on_key_event)
         self.helpWindow = None
