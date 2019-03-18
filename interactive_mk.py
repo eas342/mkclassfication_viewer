@@ -79,14 +79,18 @@ class spectralSequence(object):
         The directory where to search for new target spectrum for spectral typing 
     """
     def __init__(self,comparisonSpectrum=None,verbose=False,zoomState='In',nShow=2,
-                initialdir=None):
+                initialdir=None,library=None):
         
         self.verbose = verbose
         
         self.fileTable = ascii.read('prog_data/library_table.csv',data_start=1,
                                     header_start=0,delimiter=',')
         
-        self.libraryDirectory = mk_module.libraryDirectory
+        if library == None:
+            self.libraryDirectory = mk_module.libraryDirectory
+        else:
+            self.libraryDirectory = library
+        
         self.nTemp = len(self.fileTable)
         firstTIndex = int(self.nTemp / 2) ## start in the middle
         
@@ -307,7 +311,7 @@ class App(object):
     """ This class is an application widget for interacting with matplotlib
     using tkinter"""
     def __init__(self, master,apptestmode=False,comparisonSpectrum=None,
-                 initialdir=None):
+                 initialdir=None,library=None):
         self.master = master
         #self.fig, self.ax = plt.subplots(figsize=(4,4))
         self.fig = mplfig.Figure(figsize=(20, 6))
@@ -321,7 +325,7 @@ class App(object):
             self.function = sinecurve()
         else:
             self.function = spectralSequence(comparisonSpectrum=comparisonSpectrum,
-                                             initialdir=initialdir)
+                                             initialdir=initialdir,library=library)
         self.update_plot()
         self.canvas.mpl_connect('key_press_event', self.on_key_event)
         self.helpWindow = None
@@ -391,7 +395,7 @@ def main(**kwargs):
     if sys.platform == 'darwin':
         #I find this useful since my OS X always puts python/tkinter in the background and I want it in the foreground
         os.system('''osascript -e 'tell app "Finder" to set frontmost of process "python" to true' ''')
-    tk.mainloop()
+    root.mainloop()
     del app
     del root
 

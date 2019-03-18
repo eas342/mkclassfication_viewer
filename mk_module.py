@@ -110,7 +110,7 @@ def normalizeTemplates(doPlot=False):
     
     
 
-def make_type_table():
+def make_type_table(library='libnor36'):
     fileL = glob.glob('../mklib/libnor36/*.rbn')
     tCodes,tTypes = [], [] ## temperature codes and class
     lCodes = [] ## luminosity codes
@@ -142,7 +142,7 @@ def make_type_table():
             print("File "+oneFile+" couldn't be placed in the table")
             pdb.set_trace()
         
-    t.write('prog_data/library_table.csv')   
+    t.write('prog_data/library_table_{}.csv'.format(library))   
     #for oneFile in fileL:
      #   column = 
     #for np.
