@@ -172,6 +172,18 @@ class spectralSequence(object):
         if self.comparisonSpectrum is not None:
             self.comparisonDat['Flux'] = self.comparisonDat['Flux'] + self.normStepSize * direction
     
+    def shift_wave(self,shift):
+        """ 
+        Adjusts the wavelength of the target spectrum (moving it left/right)
+        
+        Parameters
+        -----------
+        shift: float
+            The value of the wavelength shift
+        """
+        if self.comparisonSpectrum is not None:
+            self.comparisonDat['Wavelength'] = self.comparisonDat['Wavelength'] + shift
+    
     def change_tempclass(self,amount):
         """ 
         Changes the temperature class by going up by amount in the index of the file Table
@@ -346,7 +358,7 @@ class App(object):
         Tests the keyboard event to """
         if event.key == 'q' or event.key == 'Q':
             self.quit()
-        elif event.key in ['right','left','up','down','u','j','o','z','l','y','t']:
+        elif event.key in ['right','left','up','down','u','j','o','z','l','y','t','e','r']:
             ## In this section, all changes will update the plot
             if event.key == 'right': self.function.right()
             elif event.key == 'left' : self.function.left()
@@ -361,6 +373,8 @@ class App(object):
                 self.function.get_comparison_spec(filename)
             elif event.key == 'z': self.function.zoom()
             elif event.key == 'l': self.function.toggle_lines()
+            elif event.key == 'e': self.function.shift_wave(-0.5)
+            elif event.key == 'r': self.function.shift_wave(0.5)
             else: 
                 print('Nonsensical place reached in code!')
                 pdb.set_trace()
