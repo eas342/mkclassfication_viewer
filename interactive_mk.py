@@ -79,17 +79,14 @@ class spectralSequence(object):
         The directory where to search for new target spectrum for spectral typing 
     """
     def __init__(self,comparisonSpectrum=None,verbose=False,zoomState='In',nShow=2,
-                initialdir=None,library=None):
+                initialdir=None,library='libnor36'):
         
         self.verbose = verbose
         
-        self.fileTable = ascii.read('prog_data/library_table.csv',data_start=1,
+        self.fileTable = ascii.read('prog_data/library_table_{}.csv'.format(library),
+                                    data_start=1,
                                     header_start=0,delimiter=',')
-        
-        if library == None:
-            self.libraryDirectory = mk_module.defaultLibraryDirectory
-        else:
-            self.libraryDirectory = library
+        self.libraryDirectory = '../mklib/{}'.format(library)
         
         self.nTemp = len(self.fileTable)
         firstTIndex = int(self.nTemp / 2) ## start in the middle
@@ -281,15 +278,31 @@ class spectralSequence(object):
             
             ## Replace the labels with actual terms
             fig.canvas.draw()
-            showLumIndices = [0,3,5,8]
-            showLumLabels = ['Ia','II','III','V']
+            
+            possibleLumCodes = [0.0,2.,3.0,5.0] ## Ia, II, III, V
+            
+            showLumIndices, showLumLabels = [], []
+            
+            for oneLumCode in possibleLumCodes:
+                matchingLumInd = (str(oneLumCode) == np.array(self.fileTable.colnames))
+                
+                if np.sum(matchingLumInd) == 1:
+                    showLumIndices.append(np.where(matchingLumInd)[0][0] - 2)
+                    labelName = mk_module.spCodes['Luminosity'][oneLumCode]
+                    showLumLabels.append(labelName)
+            
             axClass.set_xticks(showLumIndices)
             axClass.set_xticklabels(showLumLabels)
             
-            showTLabels = ['O6','B0','B5','A0','A5','F0','F5','G0','G5','K0','K5','M0','M5']
-            showTIndices = []
-            for oneTempClass in showTLabels:
-                showTIndices.append(np.where(self.fileTable['Temperature_Class'] == oneTempClass)[0][0])
+            possibleTLabels = ['O6','B0','B5','A0','A5','F0','F5','G0','G5','K0','K5','M0','M5']
+            showTIndices, showTLabels = [], []
+            #pdb.set_trace()
+            for oneTempClass in possibleTLabels:
+                matchingTemp = self.fileTable['Temperature_Class'] == oneTempClass
+                if np.sum(matchingTemp) >= 1:
+                    showTIndices.append(np.where(matchingTemp)[0][0])
+                    showTLabels.append(oneTempClass)
+            
             axClass.set_yticks(showTIndices)
             axClass.set_yticklabels(showTLabels)
             
@@ -323,7 +336,7 @@ class App(object):
     """ This class is an application widget for interacting with matplotlib
     using tkinter"""
     def __init__(self, master,apptestmode=False,comparisonSpectrum=None,
-                 initialdir=None,library=None):
+                 initialdir=None,library='libnor36'):
         self.master = master
         #self.fig, self.ax = plt.subplots(figsize=(4,4))
         self.fig = mplfig.Figure(figsize=(20, 6))
