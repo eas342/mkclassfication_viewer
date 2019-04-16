@@ -13,7 +13,7 @@ import pandas as pd
 ## Get the dictionary to convert spectral code to spectral type
 spCodes = yaml.load(open('prog_data/stype_dict.yaml'))
 
-libraryDirectory = '../mklib/libnor36'
+defaultLibraryDirectory = '../mklib/libnor36'
 
 def make_line_csv():
     """ Make as a CSV from the Excel line list """
@@ -37,7 +37,8 @@ class mkspectrum(object):
     def __init__(self,oneFile):
         self.fullPath = oneFile
         self.basename = os.path.basename(oneFile)
-        self.tCode = float(self.basename[1:4])/10.0
+        tCodeText = self.basename[1:4]
+        self.tCode = float(tCodeText)/10.0
         self.tClass = dictLookup(spCodes['Spectral Code'],self.tCode) ## temp class
         self.lCode = float(self.basename[5:7])/10.0
         self.lClass =  dictLookup(spCodes['Luminosity'],self.lCode) ## luminosity class
@@ -111,7 +112,7 @@ def normalizeTemplates(doPlot=False):
     
 
 def make_type_table(library='libnor36'):
-    fileL = glob.glob('../mklib/libnor36/*.rbn')
+    fileL = glob.glob('../mklib/{}/t???l??p??.rbn'.format(library))
     tCodes,tTypes = [], [] ## temperature codes and class
     lCodes = [] ## luminosity codes
     for oneFile in fileL:
@@ -123,7 +124,7 @@ def make_type_table(library='libnor36'):
     uniqTCodes, uniqTIndices = np.unique(tCodes,return_index=True)
     nUniqT = uniqTCodes.shape[0]
     uniqlCodes = np.unique(lCodes)
-    #pdb.set_trace()
+    
     t = Table()
     
     t['Temperature_Class'] = np.array(tTypes)[uniqTIndices]

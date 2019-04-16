@@ -87,7 +87,7 @@ class spectralSequence(object):
                                     header_start=0,delimiter=',')
         
         if library == None:
-            self.libraryDirectory = mk_module.libraryDirectory
+            self.libraryDirectory = mk_module.defaultLibraryDirectory
         else:
             self.libraryDirectory = library
         
