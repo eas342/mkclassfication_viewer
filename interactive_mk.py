@@ -3,8 +3,10 @@ matplotlib.use('TkAgg')
 
 import matplotlib.pyplot as plt
 import numpy as np
-import Tkinter as tk
-import tkFileDialog
+#import Tkinter as tk
+import tkinter as tk
+#import tkFileDialog
+from tkinter import filedialog as tkFileDialog
 import matplotlib.figure as mplfig
 import matplotlib.backends.backend_tkagg as tkagg
 from matplotlib.backend_bases import key_press_handler
@@ -95,7 +97,8 @@ class spectralSequence(object):
         self._tIndex = firstTIndex - np.arange(nShow)
         
         ## Spectral code to Spectral type dictionary
-        self.spCodes = yaml.load(open('prog_data/stype_dict.yaml'))
+        #self.spCodes = yaml.load(open('prog_data/stype_dict.yaml'))
+        self.spCodes = yaml.safe_load(open('prog_data/stype_dict.yaml'))
         
         ## Number of spectral types in table
         ## assumes two columns for spectral type code and spectral type name

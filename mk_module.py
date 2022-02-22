@@ -11,7 +11,7 @@ import pandas as pd
 
 
 ## Get the dictionary to convert spectral code to spectral type
-spCodes = yaml.load(open('prog_data/stype_dict.yaml'))
+spCodes = yaml.safe_load(open('prog_data/stype_dict.yaml'))
 
 defaultLibraryDirectory = '../mklib/libnor36'
 
